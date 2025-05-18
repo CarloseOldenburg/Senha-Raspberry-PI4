@@ -46,4 +46,4 @@ JAVA_CMD="java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib \
 grep -qxF "$JAVA_CMD" "$BASHRC" || echo "$JAVA_CMD" >> "$BASHRC"
 
 echo "✅ Instalação finalizada com sucesso!"
-echo "➡ Reinicie o Raspberry Pi ou abra um novo terminal para executar o painel automaticamente."
+echo "➡ Reinicie o Raspberry Pi ou abra um novo terminal para executar o painel automaticamente.."
