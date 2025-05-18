@@ -1,5 +1,6 @@
 #!/bin/bash
-# sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
+# Instalação automatizada do Painel SGA no Raspberry Pi 4
+# Execute com: sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
 
 # === CONFIGURAÇÃO ===
 JDK_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/jdk-23_linux-aarch64_bin.tar.gz"
@@ -14,7 +15,7 @@ echo "📦 Atualizando o sistema..."
 sudo apt update && sudo apt full-upgrade -y
 
 echo "📦 Instalando bibliotecas necessárias..."
-sudo apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget
+sudo apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal
 
 echo "📥 Baixando e extraindo JDK..."
 wget -O /tmp/jdk.tar.gz "$JDK_URL"
@@ -35,15 +36,25 @@ echo "⚙️  Configurando o JDK 23 como padrão..."
 sudo update-alternatives --install /usr/bin/java java /opt/jdk-23.0.2/bin/java 1
 sudo update-alternatives --install /usr/bin/javac javac /opt/jdk-23.0.2/bin/javac 1
 
-echo "📝 Configurando execução automática no ~/.bashrc..."
-BASHRC="$USER_HOME/.bashrc"
-JAVA_CMD="java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib \
---module-path $USER_HOME/javafx-sdk-23.0.2/lib \
---add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
--jar $USER_HOME/painel-sga-1.0-SNAPSHOT.jar"
+echo "🚀 Criando atalho de inicialização automática..."
+AUTOSTART_DIR="$USER_HOME/.config/autostart"
+DESKTOP_FILE="$AUTOSTART_DIR/painel-sga.desktop"
 
-# Adiciona ao bashrc apenas se ainda não existir
-grep -qxF "$JAVA_CMD" "$BASHRC" || echo "$JAVA_CMD" >> "$BASHRC"
+mkdir -p "$AUTOSTART_DIR"
+
+cat <<EOF > "$DESKTOP_FILE"
+[Desktop Entry]
+Type=Application
+Name=Painel SGA
+Comment=Iniciar automaticamente o painel de senhas
+Exec=lxterminal -e java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib --module-path $USER_HOME/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar $USER_HOME/painel-sga-1.0-SNAPSHOT.jar
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+EOF
+
+chmod +x "$DESKTOP_FILE"
+chmod +x "$USER_HOME/painel-sga-1.0-SNAPSHOT.jar"
 
 echo "✅ Instalação finalizada com sucesso!"
-echo "➡ Reinicie o Raspberry Pi ou abra um novo terminal para executar o painel automaticamente.."
+echo "🔁 Reinicie o Raspberry Pi para iniciar o painel automaticamente."
