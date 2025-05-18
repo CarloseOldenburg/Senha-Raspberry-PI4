@@ -1,6 +1,6 @@
 #!/bin/bash
 # Instalação automatizada do Painel SGA no Raspberry Pi 4
-# Execute com: sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
+# sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
 
 # === CONFIGURAÇÃO ===
 JDK_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/jdk-23_linux-aarch64_bin.tar.gz"
