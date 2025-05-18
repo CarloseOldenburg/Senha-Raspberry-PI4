@@ -1,0 +1,47 @@
+#!/bin/bash
+# sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/updater/refs/heads/main/rollout.sh | bash
+
+# === CONFIGURAÇÃO ===
+JDK_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/jdk-23_linux-aarch64_bin.tar.gz"
+JAVAFX_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/openjfx-23.0.2_linux-aarch64_bin-sdk.zip"
+PAINEL_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/painel-sga.zip"
+USER_HOME="/home/pi"
+
+echo "Atualizando fontes para Bookworm..."
+sudo sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
+
+echo "Atualizando o sistema..."
+sudo apt update && sudo apt full-upgrade -y
+
+echo "Instalando bibliotecas necessárias..."
+sudo apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget
+
+echo "Baixando e extraindo JDK..."
+wget -O /tmp/jdk.tar.gz "$JDK_URL"
+sudo tar -xzf /tmp/jdk.tar.gz -C /opt
+sudo rm /tmp/jdk.tar.gz
+
+echo "Baixando e extraindo JavaFX..."
+wget -O /tmp/javafx.zip "$JAVAFX_URL"
+unzip /tmp/javafx.zip -d "$USER_HOME"
+rm /tmp/javafx.zip
+
+echo "Baixando painel SGA..."
+wget -O "$USER_HOME/painel-sga-1.0-SNAPSHOT.jar" "$PAINEL_URL"
+
+echo "Configurando o JDK 23 como padrão..."
+sudo update-alternatives --install /usr/bin/java java /opt/jdk-23.0.2/bin/java 1
+sudo update-alternatives --install /usr/bin/javac javac /opt/jdk-23.0.2/bin/javac 1
+
+echo "Configurando inicialização automática no ~/.bashrc..."
+BASHRC="$USER_HOME/.bashrc"
+CMD="java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib \
+--module-path $USER_HOME/javafx-sdk-23.0.2/lib \
+--add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
+-jar $USER_HOME/painel-sga-1.0-SNAPSHOT.jar"
+
+# Adiciona apenas se ainda não existir
+grep -qxF "$CMD" "$BASHRC" || echo "$CMD" >> "$BASHRC"
+
+echo "✅ Instalação finalizada com sucesso!"
+echo "➡ Reinicie o Raspberry Pi ou abra um novo terminal para executar o painel automaticamente."
