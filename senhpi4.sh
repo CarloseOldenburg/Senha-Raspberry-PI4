@@ -67,10 +67,10 @@ echo "📝 Criando ou substituindo o arquivo de configuração..."
 # Cria o novo arquivo
 cat <<EOF > "$CONFIG_FILE"
 #Novo SGA configuration file
-#$(date)
+#Tue Sep 16 10:23:59 BRT 2014
 CorSenha=\#f2f2f2
-ScreensaverUrl=file\:/home/misael/js/dist/vs-sga-painel-1.1/media/video/promo1.mp4
-IPServidor=http://IP
+ScreensaverUrl=file\:/home/pi/media/img/SSBack.png
+IPServidor=http://192.168.10.182
 Servicos=1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
 Language=pt
 MainLayout=1
