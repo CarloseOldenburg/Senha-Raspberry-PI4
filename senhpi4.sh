@@ -15,7 +15,7 @@ JAVAFX_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/openjfx-23.0.2_lin
 PAINEL_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/painel-sga.zip"
 UI_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/ui.zip"
 USER_HOME="/home/pi"
-CONFIG_FILE="$USER_HOME/arquivo.conf"
+CONFIG_FILE="$USER_HOME/painel.conf"
 
 echo "📦 Atualizando fontes para Bookworm..."
 sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
