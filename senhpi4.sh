@@ -1,5 +1,6 @@
 #!/bin/bash
 # Instalação automatizada do Painel SGA no Raspberry Pi 4
+# Execute com:
 # sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
 
 # === CONFIGURAÇÃO ===
@@ -24,7 +25,8 @@ sudo rm /tmp/jdk.tar.gz
 
 echo "📥 Baixando e extraindo JavaFX..."
 wget -O /tmp/javafx.zip "$JAVAFX_URL"
-unzip -q /tmp/javafx.zip -d "$USER_HOME"
+rm -rf "$USER_HOME/javafx-sdk-23.0.2"  # remove versão anterior para evitar conflitos
+unzip -o -q /tmp/javafx.zip -d "$USER_HOME"
 rm /tmp/javafx.zip
 
 echo "📥 Baixando e extraindo Painel SGA..."
