@@ -1,8 +1,7 @@
 #!/bin/bash
 # Instalação automatizada do Painel SGA no Raspberry Pi 4
 # Execute com:
-# sudo su
-# wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
+# sudo su wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
 
 # === VERIFICAÇÃO DE ROOT ===
 if [ "$(id -u)" -ne 0 ]; then
