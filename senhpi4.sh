@@ -24,14 +24,14 @@ sudo rm /tmp/jdk.tar.gz
 
 echo "📥 Baixando e extraindo JavaFX..."
 wget -O /tmp/javafx.zip "$JAVAFX_URL"
-sudo rm -rf "$USER_HOME/javafx-sdk-23.0.2"  # força remoção como root
+sudo rm -rf "$USER_HOME/javafx-sdk-23.0.2" 
 unzip -o -q /tmp/javafx.zip -d "$USER_HOME"
-sudo chown -R pi:pi "$USER_HOME/javafx-sdk-23.0.2"  # corrige permissões
+sudo chown -R pi:pi "$USER_HOME/javafx-sdk-23.0.2" 
 rm /tmp/javafx.zip
 
 echo "📥 Baixando e extraindo Painel SGA..."
 wget -O /tmp/painel-sga.zip "$PAINEL_URL"
-unzip -q /tmp/painel-sga.zip -d "$USER_HOME"
+unzip -uo -q /tmp/painel-sga.zip -d "$USER_HOME"
 rm /tmp/painel-sga.zip
 
 echo "⚙️  Configurando o JDK 23 como padrão..."
