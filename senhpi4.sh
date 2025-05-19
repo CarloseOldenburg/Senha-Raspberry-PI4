@@ -130,4 +130,7 @@ else
   echo "A instalação terminou com problemas. Verifique as mensagens acima."
 fi
 
+echo "Mensagem de Finalização de instalação"
+echo "Não esqueça de informar o IP no painel.conf e trocar o SSBack.png."
+echo "painel.conf se encontra no caminho /home/pi/ e SSBack.png se encontra no caminho /home/pi/ui/img/ "
 echo "Reinicie o Raspberry Pi para iniciar o painel automaticamente."
