@@ -7,6 +7,7 @@ JDK_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/jdk-23_linux-aarch64_
 JAVAFX_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/openjfx-23.0.2_linux-aarch64_bin-sdk.zip"
 PAINEL_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/painel-sga.zip"
 USER_HOME="/home/pi"
+CONFIG_FILE="$USER_HOME/arquivo.conf"
 
 echo "📦 Atualizando fontes para Bookworm..."
 sudo sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
@@ -24,9 +25,9 @@ sudo rm /tmp/jdk.tar.gz
 
 echo "📥 Baixando e extraindo JavaFX..."
 wget -O /tmp/javafx.zip "$JAVAFX_URL"
-sudo rm -rf "$USER_HOME/javafx-sdk-23.0.2" 
+sudo rm -rf "$USER_HOME/javafx-sdk-23.0.2"
 unzip -o -q /tmp/javafx.zip -d "$USER_HOME"
-sudo chown -R pi:pi "$USER_HOME/javafx-sdk-23.0.2" 
+sudo chown -R pi:pi "$USER_HOME/javafx-sdk-23.0.2"
 rm /tmp/javafx.zip
 
 echo "📥 Baixando e extraindo Painel SGA..."
@@ -57,6 +58,34 @@ EOF
 
 chmod +x "$DESKTOP_FILE"
 chmod +x "$USER_HOME/painel-sga-1.0-SNAPSHOT.jar"
+
+echo "📝 Criando ou substituindo o arquivo de configuração..."
+
+# Remove se existir
+[ -f "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
+
+# Cria o novo arquivo
+cat <<EOF > "$CONFIG_FILE"
+#Novo SGA configuration file
+#$(date)
+CorSenha=\#f2f2f2
+ScreensaverUrl=file\:/home/misael/js/dist/vs-sga-painel-1.1/media/video/promo1.mp4
+IPServidor=http://IP
+Servicos=1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
+Language=pt
+MainLayout=1
+CorMensagem=\#ffffff
+UnidadeId=1
+VideoID=1
+ScreensaverLayout=3
+Vocalizar=true
+Som=alert.wav
+CorFundo=\#33cc99
+CorGuiche=\#ffffff
+ScreensaverTimeout=30
+EOF
+
+chmod 644 "$CONFIG_FILE"
 
 echo "✅ Instalação finalizada com sucesso!"
 echo "🔁 Reinicie o Raspberry Pi para iniciar o painel automaticamente."
