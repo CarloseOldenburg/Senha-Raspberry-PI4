@@ -1,7 +1,7 @@
 #!/bin/bash
-# Instalação automatica do Painel SGA no Raspberry Pi 4
+# Instalação automatizada do Painel SGA no Raspberry Pi 4
 # Execute com:
-# wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
+# sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
 
 # === VERIFICAÇÃO DE ROOT ===
 if [ "$(id -u)" -ne 0 ]; then
@@ -17,34 +17,35 @@ UI_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/ui.zip"
 USER_HOME="/home/pi"
 CONFIG_FILE="$USER_HOME/painel.conf"
 JAR_FILE="$USER_HOME/painel-sga-1.0-SNAPSHOT.jar"
+LOG_FILE="$USER_HOME/painel.log"
 
-echo "Atualizando fontes para Bookworm..."
+echo "📦 Atualizando fontes para Bookworm..."
 sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
 
-echo "Atualizando o sistema..."
+echo "📦 Atualizando o sistema..."
 apt update && apt full-upgrade -y
 
-echo "Instalando bibliotecas necessárias..."
-apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal mesa-utils x11-xserver-utils x11-utils xserver-xorg-video-fbdev
+echo "📦 Instalando bibliotecas necessárias..."
+apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal
 
-echo "Baixando e extraindo JDK..."
+echo "📥 Baixando e extraindo JDK..."
 wget -O /tmp/jdk.tar.gz "$JDK_URL"
 tar -xzf /tmp/jdk.tar.gz -C /opt
 rm /tmp/jdk.tar.gz
 
-echo "Baixando e extraindo JavaFX..."
+echo "📥 Baixando e extraindo JavaFX..."
 wget -O /tmp/javafx.zip "$JAVAFX_URL"
 rm -rf "$USER_HOME/javafx-sdk-23.0.2"
 unzip -o -q /tmp/javafx.zip -d "$USER_HOME"
 chown -R pi:pi "$USER_HOME/javafx-sdk-23.0.2"
 rm /tmp/javafx.zip
 
-echo "Baixando e extraindo Painel SGA..."
+echo "📥 Baixando e extraindo Painel SGA..."
 wget -O /tmp/painel-sga.zip "$PAINEL_URL"
 unzip -uo -q /tmp/painel-sga.zip -d "$USER_HOME"
 rm /tmp/painel-sga.zip
 
-echo "Baixando e extraindo UI..."
+echo "📥 Baixando e extraindo UI..."
 wget -O /tmp/ui.zip "$UI_URL"
 unzip -uo -q /tmp/ui.zip -d "$USER_HOME"
 rm /tmp/ui.zip
@@ -53,7 +54,7 @@ echo "⚙️ Configurando o JDK 23 como padrão..."
 update-alternatives --install /usr/bin/java java /opt/jdk-23.0.2/bin/java 1
 update-alternatives --install /usr/bin/javac javac /opt/jdk-23.0.2/bin/javac 1
 
-echo "Criando atalho de inicialização automática..."
+echo "🚀 Criando atalho de inicialização automática..."
 AUTOSTART_DIR="$USER_HOME/.config/autostart"
 DESKTOP_FILE="$AUTOSTART_DIR/painel-sga.desktop"
 
@@ -64,7 +65,7 @@ cat <<EOF > "$DESKTOP_FILE"
 Type=Application
 Name=Painel SGA
 Comment=Iniciar automaticamente o painel de senhas
-Exec=bash -c 'cd /home/pi && java -Djava.library.path=/home/pi/javafx-sdk-23.0.2/lib --module-path /home/pi/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar /home/pi/painel-sga-1.0-SNAPSHOT.jar'
+Exec=bash -c "DISPLAY=:0 java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib --module-path $USER_HOME/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar $JAR_FILE >> $LOG_FILE 2>&1"
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
@@ -73,7 +74,7 @@ EOF
 chmod +x "$DESKTOP_FILE"
 chmod +x "$JAR_FILE"
 
-echo "Criando ou substituindo o arquivo de configuração..."
+echo "📝 Criando ou substituindo o arquivo de configuração..."
 [ -f "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
 
 cat <<EOF > "$CONFIG_FILE"
@@ -81,7 +82,7 @@ cat <<EOF > "$CONFIG_FILE"
 #$(date)
 CorSenha=\#f2f2f2
 ScreensaverUrl=file\:/home/pi/media/img/SSBack.png
-IPServidor=http://192.168.0.100
+IPServidor=http://IP
 Servicos=1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
 Language=pt
 MainLayout=1
@@ -99,39 +100,8 @@ EOF
 chmod 644 "$CONFIG_FILE"
 chown pi:pi "$CONFIG_FILE"
 
-echo "Validando instalação..."
-
-# Verificações
-success=true
-
-if [ ! -f "$JAR_FILE" ]; then
-  echo "ERRO: Arquivo $JAR_FILE não encontrado!"
-  success=false
-else
-  echo "JAR encontrado: $JAR_FILE"
-fi
-
-if ! command -v java >/dev/null 2>&1; then
-  echo "ERRO: Java não está disponível no sistema!"
-  success=false
-else
-  echo "Java disponível: $(java -version 2>&1 | head -n1)"
-fi
-
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "ERRO: Arquivo de configuração $CONFIG_FILE não foi criado!"
-  success=false
-else
-  echo "Arquivo de configuração criado: $CONFIG_FILE"
-fi
-
-if $success; then
-  echo "✅ Tudo certo! Instalação concluída com sucesso!"
-else
-  echo "⚠️ A instalação terminou com problemas. Verifique as mensagens acima."
-fi
-
-echo "🔧 Ajustes manuais:"
-echo "- Edite o arquivo painel.conf e defina corretamente o IPServidor"
-echo "- Personalize o fundo em: /home/pi/media/img/SSBack.png"
-echo "- Reinicie o Raspberry Pi para iniciar o Painel automaticamente"
+echo "✅ Tudo pronto!"
+echo "📍 Verifique o log em $LOG_FILE caso o painel não abra."
+echo "📂 painel.conf está em $USER_HOME/"
+echo "🖼️ Imagem de fundo SSBack.png está em $USER_HOME/ui/img/"
+echo "🔁 Reinicie o Raspberry Pi para iniciar o painel automaticamente."
