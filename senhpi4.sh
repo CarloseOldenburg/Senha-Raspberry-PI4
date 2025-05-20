@@ -4,11 +4,11 @@
 
 # === VERIFICAÇÃO DE ROOT ===
 if [ "$(id -u)" -ne 0 ]; then
-  echo "Este script deve ser executado como root (sudo su)."
+  echo "Este script deve ser executado como root."
   exit 1
 fi
 
-# === CONFIGURAÇÃO ===
+# === VARIÁVEIS ===
 JDK_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/jdk-23_linux-aarch64_bin.tar.gz"
 JAVAFX_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/openjfx-23.0.2_linux-aarch64_bin-sdk.zip"
 PAINEL_URL="https://painel-sga-cdn.s3.us-east-2.amazonaws.com/painel-sga.zip"
@@ -18,78 +18,71 @@ CONFIG_FILE="$USER_HOME/painel.conf"
 JAR_FILE="$USER_HOME/painel-sga-1.0-SNAPSHOT.jar"
 LOG_FILE="$USER_HOME/painel.log"
 
-echo "🚧 Desativando Wayland (forçando X11)..."
+# === DESATIVAR WAYLAND E FORÇAR X11 ===
+echo "🚧 Desativando Wayland e forçando X11..."
 
-# Força uso do X11 no lightdm
-mkdir -p /etc/lightdm/lightdm.conf.d
 cat <<EOF > /etc/lightdm/lightdm.conf.d/99-x11.conf
 [Seat:*]
 display-server=x11
 EOF
 
-# Garante configuração correta do lightdm.conf
-if grep -q "^WaylandEnable=" /etc/lightdm/lightdm.conf; then
-  sed -i 's/^WaylandEnable=.*/WaylandEnable=false/' /etc/lightdm/lightdm.conf
-else
-  echo -e "[Seat:*]\nWaylandEnable=false" >> /etc/lightdm/lightdm.conf
-fi
+sed -i '/WaylandEnable=/d' /etc/lightdm/lightdm.conf
+echo -e "[Seat:*]\nWaylandEnable=false" >> /etc/lightdm/lightdm.conf
 
-# Força X11 na sessão do usuário
-echo "export XDG_SESSION_TYPE=x11" >> /home/pi/.bashrc
-echo "exec startlxsession" > /home/pi/.xsession
-chown pi:pi /home/pi/.xsession
+echo "exec startlxsession" > "$USER_HOME/.xsession"
+chown pi:pi "$USER_HOME/.xsession"
 
-echo "🔄 Atualizando fontes para Bookworm..."
+# === ATUALIZAÇÃO DO SISTEMA ===
+echo "🔄 Atualizando sistema para Bookworm..."
 sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
-
-echo "📥 Atualizando o sistema..."
 apt update && apt full-upgrade -y
 
-echo "📥 Instalando bibliotecas necessárias..."
+# === INSTALAR DEPENDÊNCIAS ===
+echo "📥 Instalando dependências..."
 apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal xserver-xorg lightdm lxde
 
-# Configura o gerenciador de display padrão
 echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 dpkg-reconfigure -f noninteractive lightdm
 
-echo "📥 Baixando e extraindo JDK..."
+# === INSTALAR JDK E JAVAFX ===
+echo "📦 Instalando JDK e JavaFX..."
 wget -O /tmp/jdk.tar.gz "$JDK_URL"
 tar -xzf /tmp/jdk.tar.gz -C /opt
 rm /tmp/jdk.tar.gz
 
-echo "📥 Baixando e extraindo JavaFX..."
 wget -O /tmp/javafx.zip "$JAVAFX_URL"
 rm -rf "$USER_HOME/javafx-sdk-23.0.2"
 unzip -o -q /tmp/javafx.zip -d "$USER_HOME"
 chown -R pi:pi "$USER_HOME/javafx-sdk-23.0.2"
 rm /tmp/javafx.zip
 
-echo "📥 Baixando e extraindo Painel SGA..."
+# === INSTALAR PAINEL E UI ===
+echo "📥 Instalando Painel e UI..."
 wget -O /tmp/painel-sga.zip "$PAINEL_URL"
 unzip -uo -q /tmp/painel-sga.zip -d "$USER_HOME"
 rm /tmp/painel-sga.zip
 
-echo "📥 Baixando e extraindo UI..."
 wget -O /tmp/ui.zip "$UI_URL"
 unzip -uo -q /tmp/ui.zip -d "$USER_HOME"
 rm /tmp/ui.zip
 
-echo "⚙️ Configurando o JDK 23 como padrão..."
+# === CONFIGURAR JAVA PADRÃO ===
+echo "⚙️ Configurando Java..."
 update-alternatives --install /usr/bin/java java /opt/jdk-23.0.2/bin/java 1
 update-alternatives --install /usr/bin/javac javac /opt/jdk-23.0.2/bin/javac 1
 
-echo "🚀 Criando atalho de inicialização automática..."
+# === CONFIGURAR AUTO INICIALIZAÇÃO ===
+echo "🚀 Configurando inicialização automática..."
 AUTOSTART_DIR="$USER_HOME/.config/autostart"
 DESKTOP_FILE="$AUTOSTART_DIR/painel-sga.desktop"
-
 mkdir -p "$AUTOSTART_DIR"
 
 cat <<EOF > "$DESKTOP_FILE"
 [Desktop Entry]
 Type=Application
 Name=Painel SGA
-Comment=Iniciar automaticamente o painel de senhas
-Exec=bash -c 'java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib --module-path $USER_HOME/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar $JAR_FILE >> $LOG_FILE 2>&1'
+Comment=Painel de senhas automático
+Exec=lxterminal -e bash -c '/usr/bin/java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib --module-path $USER_HOME/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar $JAR_FILE >> $LOG_FILE 2>&1'
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
@@ -98,9 +91,8 @@ EOF
 chmod +x "$DESKTOP_FILE"
 chmod +x "$JAR_FILE"
 
-echo "📋 Criando ou substituindo o arquivo de configuração..."
-[ -f "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
-
+# === CONFIGURAÇÃO PAINEL ===
+echo "📋 Gerando painel.conf..."
 cat <<EOF > "$CONFIG_FILE"
 #Novo SGA configuration file
 #$(date)
@@ -124,21 +116,20 @@ EOF
 chmod 644 "$CONFIG_FILE"
 chown pi:pi "$CONFIG_FILE"
 
+# === VALIDAÇÃO ===
 echo "🔍 Validando instalação..."
 success=true
-
-[ -f "$JAR_FILE" ] || { echo "ERRO: JAR não encontrado!"; success=false; }
-command -v java >/dev/null 2>&1 || { echo "ERRO: Java não disponível!"; success=false; }
-[ -f "$CONFIG_FILE" ] || { echo "ERRO: Arquivo de config não criado!"; success=false; }
+[ -f "$JAR_FILE" ] || { echo "❌ JAR não encontrado!"; success=false; }
+command -v java >/dev/null 2>&1 || { echo "❌ Java não disponível!"; success=false; }
+[ -f "$CONFIG_FILE" ] || { echo "❌ painel.conf não criado!"; success=false; }
 
 if $success; then
-  echo "✅ Tudo certo! Instalação concluída com sucesso!"
+  echo "✅ Instalação concluída com sucesso!"
 else
-  echo "⚠️ Instalação terminou com problemas."
+  echo "⚠️ Houve problemas na instalação."
 fi
 
-echo "✅ Tudo pronto!"
-echo "📍 Verifique o log em $LOG_FILE caso o painel não abra."
-echo "📂 painel.conf está em $USER_HOME/"
-echo "🖼️ Imagem de fundo SSBack.png está em $USER_HOME/ui/img/"
-echo "🔁 Reinicie o Raspberry Pi para iniciar o painel automaticamente."
+echo "📍 Verifique o log em $LOG_FILE após reiniciar."
+echo "📂 painel.conf em $USER_HOME/"
+echo "🖼️ Imagem de fundo em $USER_HOME/ui/img/"
+echo "🔁 Reinicie agora com 'sudo reboot'."
