@@ -1,5 +1,5 @@
 #!/bin/bash
-# Instalação automatizada do Painel SGA no Raspberry Pi 4
+# Instalação automatizada completa do Painel SGA com JavaFX no Raspberry Pi 4
 # wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
 
 # === VERIFICAÇÃO DE ROOT ===
@@ -20,17 +20,18 @@ LOG_FILE="$USER_HOME/painel.log"
 
 # === DESATIVAR WAYLAND E FORÇAR X11 ===
 echo "🚧 Desativando Wayland e forçando X11..."
-
+mkdir -p /etc/lightdm/lightdm.conf.d
 cat <<EOF > /etc/lightdm/lightdm.conf.d/99-x11.conf
 [Seat:*]
 display-server=x11
+WaylandEnable=false
 EOF
 
-sed -i '/WaylandEnable=/d' /etc/lightdm/lightdm.conf
-echo -e "[Seat:*]\nWaylandEnable=false" >> /etc/lightdm/lightdm.conf
+echo "[Seat:*]\ndisplay-server=x11\nWaylandEnable=false" > /etc/lightdm/lightdm.conf
 
 echo "exec startlxsession" > "$USER_HOME/.xsession"
-chown pi:pi "$USER_HOME/.xsession"
+echo "export XDG_SESSION_TYPE=x11" >> "$USER_HOME/.bashrc"
+chown pi:pi "$USER_HOME/.xsession" "$USER_HOME/.bashrc"
 
 # === ATUALIZAÇÃO DO SISTEMA ===
 echo "🔄 Atualizando sistema para Bookworm..."
@@ -38,11 +39,14 @@ sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
 apt update && apt full-upgrade -y
 
 # === INSTALAR DEPENDÊNCIAS ===
-echo "📥 Instalando dependências..."
-apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal xserver-xorg lightdm lxde
+echo "📥 Instalando dependências gráficas e essenciais..."
+apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal xserver-xorg lightdm lxde-core
 
 echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 dpkg-reconfigure -f noninteractive lightdm
+
+# === REINSTALAR COMPONENTES GRÁFICOS (PARA GARANTIA) ===
+apt install --reinstall -y lxde-core lightdm xserver-xorg-core xserver-xorg
 
 # === INSTALAR JDK E JAVAFX ===
 echo "📦 Instalando JDK e JavaFX..."
@@ -81,8 +85,7 @@ cat <<EOF > "$DESKTOP_FILE"
 [Desktop Entry]
 Type=Application
 Name=Painel SGA
-Comment=Painel de senhas automático
-Exec=lxterminal -e bash -c '/usr/bin/java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib --module-path $USER_HOME/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar $JAR_FILE >> $LOG_FILE 2>&1'
+Exec=lxterminal -e bash -c 'export DISPLAY=:0; export XDG_SESSION_TYPE=x11; java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib --module-path $USER_HOME/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar $JAR_FILE >> $LOG_FILE 2>&1'
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
