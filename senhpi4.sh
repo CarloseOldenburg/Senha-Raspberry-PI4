@@ -1,6 +1,7 @@
 #!/bin/bash
 # Instalação automatica do Painel SGA no Raspberry Pi 4
-# sudo wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
+# Execute com:
+# wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
 
 # === VERIFICAÇÃO DE ROOT ===
 if [ "$(id -u)" -ne 0 ]; then
@@ -24,7 +25,7 @@ echo "Atualizando o sistema..."
 apt update && apt full-upgrade -y
 
 echo "Instalando bibliotecas necessárias..."
-apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal
+apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal mesa-utils x11-xserver-utils x11-utils xserver-xorg-video-fbdev
 
 echo "Baixando e extraindo JDK..."
 wget -O /tmp/jdk.tar.gz "$JDK_URL"
@@ -48,7 +49,7 @@ wget -O /tmp/ui.zip "$UI_URL"
 unzip -uo -q /tmp/ui.zip -d "$USER_HOME"
 rm /tmp/ui.zip
 
-echo "⚙Configurando o JDK 23 como padrão..."
+echo "⚙️ Configurando o JDK 23 como padrão..."
 update-alternatives --install /usr/bin/java java /opt/jdk-23.0.2/bin/java 1
 update-alternatives --install /usr/bin/javac javac /opt/jdk-23.0.2/bin/javac 1
 
@@ -63,7 +64,7 @@ cat <<EOF > "$DESKTOP_FILE"
 Type=Application
 Name=Painel SGA
 Comment=Iniciar automaticamente o painel de senhas
-Exec=lxterminal -e java -Djava.library.path=$USER_HOME/javafx-sdk-23.0.2/lib --module-path $USER_HOME/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar $JAR_FILE
+Exec=bash -c 'cd /home/pi && java -Djava.library.path=/home/pi/javafx-sdk-23.0.2/lib --module-path /home/pi/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media -jar /home/pi/painel-sga-1.0-SNAPSHOT.jar'
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
@@ -80,7 +81,7 @@ cat <<EOF > "$CONFIG_FILE"
 #$(date)
 CorSenha=\#f2f2f2
 ScreensaverUrl=file\:/home/pi/media/img/SSBack.png
-IPServidor=http://IP
+IPServidor=http://192.168.0.100
 Servicos=1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
 Language=pt
 MainLayout=1
@@ -125,12 +126,12 @@ else
 fi
 
 if $success; then
-  echo "Tudo certo! Instalação concluída com sucesso!"
+  echo "✅ Tudo certo! Instalação concluída com sucesso!"
 else
-  echo "A instalação terminou com problemas. Verifique as mensagens acima."
+  echo "⚠️ A instalação terminou com problemas. Verifique as mensagens acima."
 fi
 
-echo "Mensagem de Finalização de instalação"
-echo "Não esqueça de informar o IP no painel.conf e trocar o SSBack.png."
-echo "painel.conf se encontra no caminho /home/pi/ e SSBack.png se encontra no caminho /home/pi/ui/img/ "
-echo "Reinicie o Raspberry Pi para iniciar o painel automaticamente."
+echo "🔧 Ajustes manuais:"
+echo "- Edite o arquivo painel.conf e defina corretamente o IPServidor"
+echo "- Personalize o fundo em: /home/pi/media/img/SSBack.png"
+echo "- Reinicie o Raspberry Pi para iniciar o Painel automaticamente"
