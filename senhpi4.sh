@@ -19,17 +19,25 @@ JAR_FILE="$USER_HOME/painel-sga-1.0-SNAPSHOT.jar"
 LOG_FILE="$USER_HOME/painel.log"
 
 echo "🚧 Desativando Wayland (forçando X11)..."
-if grep -q "^WaylandEnable=" /etc/gdm3/custom.conf; then
-  sed -i 's/^WaylandEnable=.*/WaylandEnable=false/' /etc/gdm3/custom.conf
-else
-  echo -e "[daemon]\nWaylandEnable=false" >> /etc/gdm3/custom.conf
-fi
 
+# Força uso do X11 no lightdm
+mkdir -p /etc/lightdm/lightdm.conf.d
+cat <<EOF > /etc/lightdm/lightdm.conf.d/99-x11.conf
+[Seat:*]
+display-server=x11
+EOF
+
+# Garante configuração correta do lightdm.conf
 if grep -q "^WaylandEnable=" /etc/lightdm/lightdm.conf; then
   sed -i 's/^WaylandEnable=.*/WaylandEnable=false/' /etc/lightdm/lightdm.conf
 else
   echo -e "[Seat:*]\nWaylandEnable=false" >> /etc/lightdm/lightdm.conf
 fi
+
+# Força X11 na sessão do usuário
+echo "export XDG_SESSION_TYPE=x11" >> /home/pi/.bashrc
+echo "exec startlxsession" > /home/pi/.xsession
+chown pi:pi /home/pi/.xsession
 
 echo "🔄 Atualizando fontes para Bookworm..."
 sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
@@ -38,7 +46,11 @@ echo "📥 Atualizando o sistema..."
 apt update && apt full-upgrade -y
 
 echo "📥 Instalando bibliotecas necessárias..."
-apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal
+apt install -y libgtk-3-dev libgl1-mesa-glx unzip wget lxterminal xserver-xorg lightdm lxde
+
+# Configura o gerenciador de display padrão
+echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
+dpkg-reconfigure -f noninteractive lightdm
 
 echo "📥 Baixando e extraindo JDK..."
 wget -O /tmp/jdk.tar.gz "$JDK_URL"
