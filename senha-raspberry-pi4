@@ -1,6 +1,6 @@
 #!/bin/bash
 # Instalação automatizada completa do Painel SGA com JavaFX no Raspberry Pi 4
-# wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/senhapi4/main/senhpi4.sh | bash
+# wget --inet4-only -O- https://raw.githubusercontent.com/CarloseOldenburg/Senha-Raspberry-PI4/refs/heads/main/senha-raspberry-pi4 | bash
 
 # === VERIFICAÇÃO DE ROOT ===
 if [ "$(id -u)" -ne 0 ]; then
